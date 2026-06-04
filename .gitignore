@@ -1,0 +1,15 @@
+/metrovanlibsearch
+
+*.exe
+*.test
+*.out
+/dist/
+/bin/
+
+coverage.txt
+coverage.out
+
+.DS_Store
+.idea/
+.vscode/
+*.swp
