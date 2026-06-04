@@ -14,7 +14,7 @@ type stubAdapter struct {
 	err     error
 }
 
-func (s *stubAdapter) Search(_ context.Context, _ string, _ int) ([]Result, error) {
+func (s *stubAdapter) Search(_ context.Context, _ string, _ int, _ string) ([]Result, error) {
 	return s.results, s.err
 }
 
@@ -70,7 +70,7 @@ func TestSearchAllOrderingAndErrors(t *testing.T) {
 		{Name: "Lib3", Adapter: &stubAdapter{results: nil}},
 	}
 
-	reports := searchAll(context.Background(), "q", 3)
+	reports := searchAll(context.Background(), "q", 3, "")
 	if len(reports) != 3 {
 		t.Fatalf("want 3 reports, got %d", len(reports))
 	}

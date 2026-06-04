@@ -22,5 +22,5 @@ type LibraryReport struct {
 
 // Adapter implements catalog search for one library system.
 type Adapter interface {
-	Search(ctx context.Context, query string, limit int) ([]Result, error)
+	Search(ctx context.Context, query string, limit int, format string) ([]Result, error)
 }

@@ -41,8 +41,8 @@ type rssItem struct {
 	Subtitle    string `xml:"subtitle"`
 }
 
-func (a *BiblioCommonsAdapter) Search(ctx context.Context, query string, limit int) ([]Result, error) {
-	feed, err := a.fetchRSS(ctx, query)
+func (a *BiblioCommonsAdapter) Search(ctx context.Context, query string, limit int, format string) ([]Result, error) {
+	feed, err := a.fetchRSS(ctx, query, format)
 	if err != nil {
 		return nil, err
 	}
@@ -80,12 +80,8 @@ func (a *BiblioCommonsAdapter) Search(ctx context.Context, query string, limit i
 	return results, nil
 }
 
-func (a *BiblioCommonsAdapter) fetchRSS(ctx context.Context, query string) (*rssFeed, error) {
-	u := fmt.Sprintf(
-		"https://gateway.bibliocommons.com/v2/libraries/%s/rss/search?query=%s&searchType=keyword",
-		url.PathEscape(a.Subdomain), url.QueryEscape(query),
-	)
-	body, err := httpGet(ctx, u)
+func (a *BiblioCommonsAdapter) fetchRSS(ctx context.Context, query, format string) (*rssFeed, error) {
+	body, err := httpGet(ctx, buildRSSURL(a.Subdomain, query, format))
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +90,19 @@ func (a *BiblioCommonsAdapter) fetchRSS(ctx context.Context, query string) (*rss
 		return nil, fmt.Errorf("parse RSS: %w", err)
 	}
 	return &feed, nil
+}
+
+// buildRSSURL builds the BiblioCommons RSS search URL, optionally filtering
+// by a format code (e.g. "BK", "EBOOK"). Empty format means no filter.
+func buildRSSURL(subdomain, query, format string) string {
+	u := fmt.Sprintf(
+		"https://gateway.bibliocommons.com/v2/libraries/%s/rss/search?query=%s&searchType=keyword",
+		url.PathEscape(subdomain), url.QueryEscape(query),
+	)
+	if f := strings.ToUpper(strings.TrimSpace(format)); f != "" {
+		u += "&f_FORMAT=" + url.QueryEscape(f)
+	}
+	return u
 }
 
 var (

@@ -26,7 +26,32 @@ The build produces a single static binary with no runtime dependencies.
 
 # emit JSON instead of human-readable text
 ./metrovanlibsearch --json "the bear"
+
+# filter by format code (e.g. only ebooks)
+./metrovanlibsearch --format EBOOK "atwood"
 ```
+
+### Format codes
+
+The `--format` flag accepts a BiblioCommons format code and is passed
+through to the catalog as a server-side filter. Codes are case-insensitive.
+Common values include:
+
+| Code            | Meaning             |
+| --------------- | ------------------- |
+| `BK`            | Book                |
+| `EBOOK`         | eBook               |
+| `AB`            | Audiobook (CD)      |
+| `EAUDIO`        | Audiobook (digital) |
+| `DVD`           | DVD                 |
+| `BLU_RAY`       | Blu-ray             |
+| `MUSIC_CD`      | Music CD            |
+| `MUSIC_ONLINE`  | Streaming music     |
+| `VIDEO_ONLINE`  | Streaming video     |
+| `COMIC_BK`      | Comic book          |
+| `GRAPHIC_NOVEL` | Graphic novel       |
+| `MAG`           | Magazine            |
+| `EMAG`          | eMagazine           |
 
 ## Supported libraries
 
