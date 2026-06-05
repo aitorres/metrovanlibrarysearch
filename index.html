@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metro Vancouver Library Search</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --fg: #1a1a1a;
+    --muted: #666;
+    --border: #ddd;
+    --accent: #2a5db0;
+    --card: #fff;
+    --error: #b00020;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c;
+      --fg: #e6e6e6;
+      --muted: #9aa0a6;
+      --border: #2a2d33;
+      --accent: #6ea8ff;
+      --card: #1d2025;
+      --error: #ff6b7a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+  }
+  form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    color: var(--fg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  button {
+    padding: 0.6rem 1.1rem;
+    font-size: 1rem;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  #status {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    min-height: 1.2em;
+  }
+  #status.error { color: var(--error); }
+  .library {
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .library h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+  }
+  .library .empty, .library .err {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .library .err { color: var(--error); }
+  .result {
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .result:first-of-type { border-top: none; padding-top: 0; }
+  .result a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .result a:hover { text-decoration: underline; }
+  .result .meta {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-top: 0.15rem;
+  }
+  .result .desc {
+    font-size: 0.92rem;
+    margin-top: 0.4rem;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Metro Vancouver Library Search</h1>
+  <form id="search-form">
+    <input type="text" id="q" name="q" placeholder="Search Metro Vancouver libraries..." autofocus autocomplete="off">
+    <button type="submit" id="submit-btn">Search</button>
+  </form>
+  <div id="status"></div>
+  <div id="results"></div>
+</main>
+<script>
+(function () {
+  const form = document.getElementById('search-form');
+  const input = document.getElementById('q');
+  const btn = document.getElementById('submit-btn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+
+  function text(s) { return document.createTextNode(s == null ? '' : String(s)); }
+
+  function renderReports(reports) {
+    resultsEl.textContent = '';
+    if (!Array.isArray(reports)) return;
+    for (const r of reports) {
+      const sec = document.createElement('section');
+      sec.className = 'library';
+      const h = document.createElement('h2');
+      h.appendChild(text(r.library));
+      sec.appendChild(h);
+
+      if (r.error) {
+        const e = document.createElement('div');
+        e.className = 'err';
+        e.appendChild(text('Error: ' + r.error));
+        sec.appendChild(e);
+      } else if (!r.results || r.results.length === 0) {
+        const e = document.createElement('div');
+        e.className = 'empty';
+        e.appendChild(text('No results.'));
+        sec.appendChild(e);
+      } else {
+        for (const res of r.results) {
+          const div = document.createElement('div');
+          div.className = 'result';
+
+          const titleLine = document.createElement('div');
+          if (res.url) {
+            const a = document.createElement('a');
+            a.href = res.url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.appendChild(text(res.title || '(untitled)'));
+            titleLine.appendChild(a);
+          } else {
+            titleLine.appendChild(text(res.title || '(untitled)'));
+          }
+          div.appendChild(titleLine);
+
+          const metaParts = [];
+          if (res.author) metaParts.push('by ' + res.author);
+          if (res.format) metaParts.push(res.format);
+          metaParts.push(
+            'Copies: ' + (res.copies_available || 0) +
+            ' available of ' + (res.copies_total || 0) + ' total'
+          );
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.appendChild(text(metaParts.join(' · ')));
+          div.appendChild(meta);
+
+          if (res.description) {
+            const d = document.createElement('div');
+            d.className = 'desc';
+            d.appendChild(text(res.description));
+            div.appendChild(d);
+          }
+
+          sec.appendChild(div);
+        }
+      }
+      resultsEl.appendChild(sec);
+    }
+  }
+
+  async function doSearch(q) {
+    statusEl.classList.remove('error');
+    statusEl.textContent = 'Searching…';
+    btn.disabled = true;
+    try {
+      const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
+      if (!resp.ok) {
+        const body = await resp.text();
+        throw new Error(body.trim() || ('HTTP ' + resp.status));
+      }
+      const data = await resp.json();
+      renderReports(data);
+      statusEl.textContent = '';
+    } catch (err) {
+      resultsEl.textContent = '';
+      statusEl.classList.add('error');
+      statusEl.textContent = 'Search failed: ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    const q = input.value.trim();
+    if (!q) {
+      input.focus();
+      return;
+    }
+    doSearch(q);
+  });
+})();
+</script>
+</body>
+</html>

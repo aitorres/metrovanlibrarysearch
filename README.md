@@ -1,7 +1,7 @@
 # Metro Vancouver Library Search
 
-A small CLI tool that searches the catalogs of Metro Vancouver public libraries
-at once and prints a unified summary of the results.
+A small web and CLI tool that searches the catalogs of Metro Vancouver public
+libraries at once and prints a unified summary of the results.
 
 For each library it shows up to N matches with title, author, format, copies
 available / total, a short description, and a direct catalog link.
@@ -18,17 +18,43 @@ The build produces a single static binary with no runtime dependencies.
 
 ## Usage
 
+The binary has two subcommands: `query` for a one-off CLI search and `serve`
+for the local web UI.
+
 ```sh
-./metrovanlibsearch "house of leaves"
+./metrovanlibsearch query "house of leaves"
 
 # limit results to 5 per library, default is 3
-./metrovanlibsearch --limit 5 "atwood"
+./metrovanlibsearch query --limit 5 "atwood"
 
 # emit JSON instead of human-readable text
-./metrovanlibsearch --json "the bear"
+./metrovanlibsearch query --json "the bear"
 
 # filter by format code (e.g. only ebooks)
-./metrovanlibsearch --format EBOOK "atwood"
+./metrovanlibsearch query --format EBOOK "atwood"
+```
+
+### Web UI
+
+Run a local web server with a minimal search page:
+
+```sh
+./metrovanlibsearch serve
+
+# override the listen address (default :8080)
+./metrovanlibsearch serve --addr :9090
+```
+
+The page shows a single search bar, you can submit queries
+to get results from all libraries in a unified view.
+
+### Docker
+
+A `Dockerfile` is provided that builds a small static image and runs the web UI by default:
+
+```sh
+docker build -t metrovanlibsearch .
+docker run --rm -p 8080:8080 metrovanlibsearch
 ```
 
 ### Format codes

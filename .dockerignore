@@ -1,0 +1,13 @@
+.git
+.gitignore
+
+metrovanlibsearch
+*.test
+*.out
+
+.vscode
+.idea
+.DS_Store
+
+README.md
+LICENSE

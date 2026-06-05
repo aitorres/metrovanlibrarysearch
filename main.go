@@ -13,31 +13,50 @@ import (
 const defaultLimit = 3
 const overallTimeout = 30 * time.Second
 
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage: %s <command> [flags]\n", os.Args[0])
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "commands:")
+	fmt.Fprintln(os.Stderr, "  query   search every library for a term")
+	fmt.Fprintln(os.Stderr, "  serve   start a local web UI")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintf(os.Stderr, "run '%s <command> --help' for command-specific flags\n", os.Args[0])
+}
+
 func main() {
-	jsonOut := flag.Bool("json", false, "output JSON instead of human-readable text")
-	limit := flag.Int("limit", defaultLimit, "max results per library")
-	format := flag.String("format", "", "filter by BiblioCommons format code (e.g. BK, EBOOK, AB, DVD)")
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [--json] [--limit N] [--format CODE] \"<query>\"\n", os.Args[0])
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-
-	var positional []string
-	for flag.NArg() > 0 {
-		positional = append(positional, flag.Arg(0))
-		if err := flag.CommandLine.Parse(flag.Args()[1:]); err != nil {
-			os.Exit(2)
-		}
-	}
-
-	if len(positional) == 0 {
-		flag.Usage()
+	if len(os.Args) < 2 {
+		usage()
 		os.Exit(2)
 	}
-	query := strings.TrimSpace(strings.Join(positional, " "))
+	switch os.Args[1] {
+	case "query":
+		runQuery(os.Args[2:])
+	case "serve":
+		runServe(os.Args[2:])
+	case "-h", "--help", "help":
+		usage()
+	default:
+		fmt.Fprintf(os.Stderr, "error: unknown command %q\n\n", os.Args[1])
+		usage()
+		os.Exit(2)
+	}
+}
+
+func runQuery(args []string) {
+	fs := flag.NewFlagSet("query", flag.ExitOnError)
+	jsonOut := fs.Bool("json", false, "output JSON instead of human-readable text")
+	limit := fs.Int("limit", defaultLimit, "max results per library")
+	format := fs.String("format", "", "filter by BiblioCommons format code (e.g. BK, EBOOK, AB, DVD)")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s query [--json] [--limit N] [--format CODE] \"<query>\"\n", os.Args[0])
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		os.Exit(2)
+	}
+	query := strings.TrimSpace(strings.Join(fs.Args(), " "))
 	if query == "" {
-		flag.Usage()
+		fs.Usage()
 		os.Exit(2)
 	}
 
@@ -53,6 +72,27 @@ func main() {
 		}
 	} else {
 		renderText(os.Stdout, query, reports)
+	}
+}
+
+func runServe(args []string) {
+	fs := flag.NewFlagSet("serve", flag.ExitOnError)
+	addr := fs.String("addr", ":8080", "listen address")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s serve [--addr ADDR]\n", os.Args[0])
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		os.Exit(2)
+	}
+	if fs.NArg() > 0 {
+		fmt.Fprintln(os.Stderr, "error: serve does not accept positional arguments")
+		fs.Usage()
+		os.Exit(2)
+	}
+	if err := runServer(*addr); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
 	}
 }
 
