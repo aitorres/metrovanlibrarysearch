@@ -38,6 +38,12 @@
     margin: 0 auto;
     padding: 2.5rem 1.25rem 4rem;
   }
+  #results {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
   h1 {
     font-size: 1.5rem;
     font-weight: 600;
@@ -86,7 +92,7 @@
     background: var(--card);
     border-radius: 8px;
     padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
   }
   .library h2 {
     font-size: 1.05rem;
@@ -117,6 +123,22 @@
   .result .desc {
     font-size: 0.92rem;
     margin-top: 0.4rem;
+  }
+  @media (min-width: 900px) {
+    main {
+      max-width: 1120px;
+    }
+    #results {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1300px) {
+    main {
+      max-width: 1360px;
+    }
+    #results {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 </style>
 </head>
